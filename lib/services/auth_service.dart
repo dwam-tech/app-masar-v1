@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.1.35:1337';
+  static String get baseUrl => dotenv.env['STRAPI_BASE_URL'] ?? 'http://localhost:1337';
   static const String loginEndpoint = '/api/auth/local';
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';
@@ -50,8 +51,8 @@ class AuthService {
 
   // إضافة بيانات إضافية لمستخدم نوع user - الخطوة الثانية
   Future<Map<String, dynamic>> registerStep2({
-    required String collectionName, // اسم الـ Collection (مثل app-users)
-    required Map<String, dynamic> additionalData, // البيانات الإضافية
+    required String userPhone,
+    required String userCity,
   }) async {
     try {
       final token = await getToken();
@@ -71,16 +72,17 @@ class AuthService {
       }
 
       final userId = userData['id'];
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/$collectionName'),
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'data': {
-            ...additionalData,
-            'users_permissions_user': userId, // ربط المستخدم
+          'type': 'user',
+          'appUser': {
+            'userPhone': userPhone,
+            'userCity': userCity,
           },
         }),
       );
@@ -88,13 +90,10 @@ class AuthService {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        await _updateUserData({
-          ...userData,
-          collectionName: responseData['data'],
-        });
+        await _updateUserData(responseData);
         return {
           'success': true,
-          'data': responseData['data'],
+          'data': responseData,
         };
       } else {
         return {

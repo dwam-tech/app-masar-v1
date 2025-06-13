@@ -53,12 +53,12 @@ class AuthProvider with ChangeNotifier {
 
   // تحديث بيانات المستخدم - الخطوة الثانية
   Future<Map<String, dynamic>> registerStep2({
-    required String collectionName,
-    required Map<String, dynamic> additionalData,
+    required String userPhone,
+    required String userCity,
   }) async {
     final result = await _authService.registerStep2(
-      collectionName: collectionName,
-      additionalData: additionalData,
+      userPhone: userPhone,
+      userCity: userCity,
     );
 
     if (result['success']) {

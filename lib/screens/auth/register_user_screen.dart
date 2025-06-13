@@ -157,14 +157,9 @@ Future<void> _register() async {
 
     if (result1['success']) {
       // الخطوة الثانية: إضافة البيانات الإضافية
-      final userData = {
-        'userPhone': _phoneController.text.trim(),
-        'userCity': _selectedCity,
-      };
-
       final result2 = await authProvider.registerStep2(
-        collectionName: 'userCities',
-        additionalData: userData,
+        userPhone: _phoneController.text.trim(),
+        userCity: _selectedCity!,
       );
 
       if (result2['success']) {

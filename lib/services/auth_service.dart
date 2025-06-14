@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static String get baseUrl => 'http://192.168.1.14:1337';
+  static const String baseUrl = 'http://localhost:1337';
   static const String loginEndpoint = '/api/auth/local';
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';

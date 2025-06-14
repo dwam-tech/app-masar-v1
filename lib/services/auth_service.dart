@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:1337';
+  static String get baseUrl => dotenv.env['STRAPI_BASE_URL'] ?? 'http://localhost:1337';
   static const String loginEndpoint = '/api/auth/local';
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';

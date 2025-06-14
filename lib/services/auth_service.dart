@@ -84,6 +84,8 @@ class AuthService {
             'userPhone': userPhone,
             'userCity': userCity,
             'user': userId,
+            // \u062c\u0639\u0644 \u0627\u0644\u062d\u0627\u0644\u0629 \u0645\u0646\u0634\u0648\u0631\u0629 \u062d\u062a\u0649 \u064a\u0638\u0647\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0628\u0634\u0643\u0644 \u0635\u062d\u064a\u062d
+            'publishedAt': DateTime.now().toIso8601String(),
           }
         }),
       );
@@ -102,7 +104,7 @@ class AuthService {
 
       // \u062a\u062d\u062f\u064a\u062b \u0648\u0633\u062c\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0644\u062a\u0631\u0628\u0637 \u0628\u0640 app_user
       final updateUserResponse = await http.put(
-        Uri.parse('$baseUrl/api/users/$userId'),
+        Uri.parse('$baseUrl/api/users/$userId?populate=app_user'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

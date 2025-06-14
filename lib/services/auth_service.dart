@@ -137,6 +137,30 @@ class AuthService {
     }
   }
 
+  // تسجيل مستخدم جديد وإنشاء سجل app user وربطه بالحساب
+  Future<Map<String, dynamic>> registerUser({
+    required String username,
+    required String email,
+    required String password,
+    required String userPhone,
+    required String userCity,
+  }) async {
+    final step1 = await registerStep1(
+      username: username,
+      email: email,
+      password: password,
+    );
+
+    if (!step1['success']) return step1;
+
+    final step2 = await registerStep2(
+      userPhone: userPhone,
+      userCity: userCity,
+    );
+
+    return step2;
+  }
+
   // تسجيل الدخول مع جلب العلاقات
   Future<Map<String, dynamic>> login({
     required String identifier,

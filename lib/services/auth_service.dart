@@ -79,7 +79,7 @@ class AuthService {
         },
         body: jsonEncode({
           'type': 'user',
-          'appUser': {
+          'app_user': {
             'userPhone': userPhone,
             'userCity': userCity,
           },

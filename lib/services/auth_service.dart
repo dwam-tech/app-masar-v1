@@ -71,7 +71,37 @@ class AuthService {
       }
 
       final userId = userData['id'];
-      final response = await http.put(
+
+      // \u0625\u0646\u0634\u0627\u0621 \u0633\u062c\u0644 app_user \u0623\u0648\u0644\u0627
+      final createAppUserResponse = await http.post(
+        Uri.parse('$baseUrl/api/app-users'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'data': {
+            'userPhone': userPhone,
+            'userCity': userCity,
+            'user': userId,
+          }
+        }),
+      );
+
+      if (createAppUserResponse.statusCode != 200 &&
+          createAppUserResponse.statusCode != 201) {
+        final errorData = jsonDecode(createAppUserResponse.body);
+        return {
+          'success': false,
+          'message': errorData['error']?['message'] ?? 'فشل إنشاء بيانات المستخدم',
+        };
+      }
+
+      final createAppUserData = jsonDecode(createAppUserResponse.body);
+      final appUserId = createAppUserData['data']['id'];
+
+      // \u062a\u062d\u062f\u064a\u062b \u0648\u0633\u062c\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0644\u062a\u0631\u0628\u0637 \u0628\u0640 app_user
+      final updateUserResponse = await http.put(
         Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -79,16 +109,13 @@ class AuthService {
         },
         body: jsonEncode({
           'type': 'user',
-          'app_user': {
-            'userPhone': userPhone,
-            'userCity': userCity,
-          },
+          'app_user': appUserId,
         }),
       );
 
-      final responseData = jsonDecode(response.body);
+      final responseData = jsonDecode(updateUserResponse.body);
 
-      if (response.statusCode == 200) {
+      if (updateUserResponse.statusCode == 200) {
         await _updateUserData(responseData);
         return {
           'success': true,

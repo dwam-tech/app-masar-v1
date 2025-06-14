@@ -6,9 +6,11 @@ import 'package:saba2v2/providers/service_category_provider.dart';
 import 'package:saba2v2/providers/restaurant_provider.dart';
 import 'package:saba2v2/providers/real_estate_provider.dart';
 import 'package:saba2v2/providers/auth_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
 
   // تهيئة مدير الحالة
   final authProvider = AuthProvider();

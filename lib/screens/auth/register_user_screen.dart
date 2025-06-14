@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:saba2v2/services/auth_service.dart';
 import 'package:saba2v2/providers/auth_provider.dart';
 
 class RegisterUserScreen extends StatefulWidget {
@@ -26,8 +25,6 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   bool _isLoading = false;
   // نحذف متغير _isStep1Complete لأننا سنعرض النموذج كاملاً في صفحة واحدة
   
-  // إنشاء مثيل من خدمة المصادقة
-  final AuthService _authService = AuthService();
   
   // قائمة المدن المصرية
   static const List<String> _cities = [
@@ -122,67 +119,54 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
     );
   }
 
-  // تسجيل المستخدم - الخطوة الأولى ثم الثانية مباشرة
-Future<void> _register() async {
-  if (!_formKey.currentState!.validate()) {
-    return;
-  }
+  // تسجيل المستخدم وإنشاء app user مباشرة
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-  if (_passwordController.text != _confirmPasswordController.text) {
-    _showMessage('كلمتا المرور غير متطابقتين', isError: true);
-    return;
-  }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showMessage('كلمتا المرور غير متطابقتين', isError: true);
+      return;
+    }
 
-  if (!_acceptTerms) {
-    _showMessage('يجب الموافقة على الشروط والأحكام', isError: true);
-    return;
-  }
+    if (!_acceptTerms) {
+      _showMessage('يجب الموافقة على الشروط والأحكام', isError: true);
+      return;
+    }
 
-  setState(() {
-    _isLoading = true;
-  });
+    setState(() {
+      _isLoading = true;
+    });
 
-  try {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final username = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    // الخطوة الأولى: إنشاء الحساب
-    final result1 = await authProvider.registerStep1(
-      username,
-      email,
-      password,
-    );
-
-    if (result1['success']) {
-      // الخطوة الثانية: إضافة البيانات الإضافية
-      final result2 = await authProvider.registerStep2(
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final result = await authProvider.registerUser(
+        username: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
         userPhone: _phoneController.text.trim(),
         userCity: _selectedCity!,
       );
 
-      if (result2['success']) {
+      if (result['success']) {
         _showMessage('تم إكمال تسجيل الحساب بنجاح');
         if (mounted) {
           context.go('/login');
         }
       } else {
-        _showMessage(result2['message'], isError: true);
+        _showMessage(result['message'], isError: true);
       }
-    } else {
-      _showMessage(result1['message'], isError: true);
-    }
-  } catch (e) {
-    _showMessage('حدث خطأ أثناء إنشاء الحساب: $e', isError: true);
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    } catch (e) {
+      _showMessage('حدث خطأ أثناء إنشاء الحساب: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {

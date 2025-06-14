@@ -68,6 +68,29 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
+  // تسجيل مستخدم جديد وإنشاء app user مباشرة
+  Future<Map<String, dynamic>> registerUser({
+    required String username,
+    required String email,
+    required String password,
+    required String userPhone,
+    required String userCity,
+  }) async {
+    final result = await _authService.registerUser(
+      username: username,
+      email: email,
+      password: password,
+      userPhone: userPhone,
+      userCity: userCity,
+    );
+
+    if (result['success']) {
+      await _loadUserSession();
+    }
+
+    return result;
+  }
+
   // تسجيل الخروج
   Future<void> logout() async {
     await _authService.logout();

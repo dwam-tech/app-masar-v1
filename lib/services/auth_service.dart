@@ -73,8 +73,7 @@ class AuthService {
 
       final userId = userData['id'];
 
-      // تحديث سجل المستخدم مباشرة بدون أي علاقات خارجية
-      final updateUserResponse = await http.put(
+      final response = await http.put(
         Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -82,14 +81,14 @@ class AuthService {
         },
         body: jsonEncode({
           'type': 'user',
-          'userCity': userCity,
           'userPhone': userPhone,
+          'userCity': userCity
         }),
       );
 
-      final responseData = jsonDecode(updateUserResponse.body);
+      final responseData = jsonDecode(response.body);
 
-      if (updateUserResponse.statusCode == 200) {
+      if (response.statusCode == 200) {
         await _updateUserData(responseData);
         return {
           'success': true,
@@ -140,7 +139,7 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl$loginEndpoint'),
+        Uri.parse('$baseUrl$loginEndpoint?populate=app_user,realstate_realtor,restaurant_provider,driver_provider,drivers_office_provider'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'identifier': identifier,
@@ -172,9 +171,14 @@ class AuthService {
     }
   }
 
-  // تحديد نوع المستخدم بناءً على الحقل المخصص في السجل
+  // تحديد نوع المستخدم بناءً على العلاقات
   String? _determineUserType(Map<String, dynamic> userData) {
-    return userData['type'];
+    if (userData['app_user'] != null) return 'user';
+    if (userData['realstate_realtor'] != null) return 'realtor';
+    if (userData['restaurant_provider'] != null) return 'restaurant';
+    if (userData['driver_provider'] != null) return 'driver';
+    if (userData['drivers_office_provider'] != null) return 'drivers_office';
+    return null; // لو مافيش نوع
   }
 
   // حفظ بيانات جلسة المستخدم

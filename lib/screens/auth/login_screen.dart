@@ -32,7 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result['success']) {
-        final userType = result['userType'];
+        String? userType = result['userType'];
+        if (userType == null) {
+          userType = await _authService.getUserType();
+        }
         if (userType == null) {
           _showMessage('لم يتم تحديد نوع المستخدم', isError: true);
           return;
@@ -84,14 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
       body: SafeArea(
         child: Directionality(
           textDirection: TextDirection.rtl,

@@ -156,7 +156,7 @@ class AuthService {
         return {
           'success': true,
           'data': responseData,
-          'userType': userType, // إرجاع نوع المستخدم مباشرة من الحقل
+          'type': userType, // إرجاع نوع المستخدم مباشرة من الحقل
         };
       } else {
         return {

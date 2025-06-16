@@ -133,14 +133,14 @@ class AuthService {
     return step2;
   }
 
-  // تسجيل الدخول مع جلب العلاقات
+  // تسجيل الدخول
   Future<Map<String, dynamic>> login({
     required String identifier,
     required String password,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl$loginEndpoint?populate=app_user,realstate_realtor,restaurant_provider,driver_provider,drivers_office_provider'),
+        Uri.parse('$baseUrl$loginEndpoint'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'identifier': identifier,
@@ -152,11 +152,11 @@ class AuthService {
 
       if (response.statusCode == 200) {
         await _saveUserSession(responseData);
-        final userType = _determineUserType(responseData['user']);
+        final userType = responseData['user']?['type'];
         return {
           'success': true,
           'data': responseData,
-          'userType': userType, // إرجاع نوع المستخدم
+          'userType': userType, // إرجاع نوع المستخدم مباشرة من الحقل
         };
       } else {
         return {
@@ -172,16 +172,11 @@ class AuthService {
     }
   }
 
-  // تحديد نوع المستخدم بناءً على الحقل أو العلاقات
+  // تحديد نوع المستخدم بناءً على الحقل فقط
   String? _determineUserType(Map<String, dynamic> userData) {
     if (userData.containsKey('type') && userData['type'] is String) {
       return userData['type'] as String;
     }
-    if (userData['app_user'] != null) return 'user';
-    if (userData['realstate_realtor'] != null) return 'realtor';
-    if (userData['restaurant_provider'] != null) return 'restaurant';
-    if (userData['driver_provider'] != null) return 'driver';
-    if (userData['drivers_office_provider'] != null) return 'drivers_office';
     return null; // لو مافيش نوع
   }
 

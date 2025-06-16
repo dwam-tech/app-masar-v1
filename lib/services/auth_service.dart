@@ -9,6 +9,7 @@ class AuthService {
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';
   static const String userDataKey = 'user_data';
+  static const String userTypeKey = 'user_type';
 
   // تسجيل مستخدم جديد - الخطوة الأولى
   Future<Map<String, dynamic>> registerStep1({
@@ -171,8 +172,11 @@ class AuthService {
     }
   }
 
-  // تحديد نوع المستخدم بناءً على العلاقات
+  // تحديد نوع المستخدم بناءً على الحقل أو العلاقات
   String? _determineUserType(Map<String, dynamic> userData) {
+    if (userData.containsKey('type') && userData['type'] is String) {
+      return userData['type'] as String;
+    }
     if (userData['app_user'] != null) return 'user';
     if (userData['realstate_realtor'] != null) return 'realtor';
     if (userData['restaurant_provider'] != null) return 'restaurant';
@@ -186,12 +190,24 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(tokenKey, data['jwt']);
     await prefs.setString(userDataKey, jsonEncode(data['user']));
+    final type = _determineUserType(data['user']);
+    if (type != null) {
+      await prefs.setString(userTypeKey, type);
+    } else {
+      await prefs.remove(userTypeKey);
+    }
   }
 
   // تحديث بيانات المستخدم المحلية
   Future<void> _updateUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(userDataKey, jsonEncode(userData));
+    final type = _determineUserType(userData);
+    if (type != null) {
+      await prefs.setString(userTypeKey, type);
+    } else {
+      await prefs.remove(userTypeKey);
+    }
   }
 
   // الحصول على التوكن
@@ -209,6 +225,11 @@ class AuthService {
 
   // الحصول على نوع المستخدم
   Future<String?> getUserType() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedType = prefs.getString(userTypeKey);
+    if (storedType != null && storedType.isNotEmpty) {
+      return storedType;
+    }
     final userData = await getUserData();
     if (userData == null) return null;
     return _determineUserType(userData);

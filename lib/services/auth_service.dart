@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:1337';
+  // عنوان الخادم الخاص بواجهة برمجة التطبيقات
+  static const String baseUrl = 'http://192.168.1.12:1337';
   static const String loginEndpoint = '/api/auth/local';
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';
@@ -72,46 +73,17 @@ class AuthService {
 
       final userId = userData['id'];
 
-      // \u0625\u0646\u0634\u0627\u0621 \u0633\u062c\u0644 app_user \u0623\u0648\u0644\u0627
-      final createAppUserResponse = await http.post(
-        Uri.parse('$baseUrl/api/app-users'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'data': {
-            'userPhone': userPhone,
-            'userCity': userCity,
-            'user': userId,
-            // \u062c\u0639\u0644 \u0627\u0644\u062d\u0627\u0644\u0629 \u0645\u0646\u0634\u0648\u0631\u0629 \u062d\u062a\u0649 \u064a\u0638\u0647\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0628\u0634\u0643\u0644 \u0635\u062d\u064a\u062d
-            'publishedAt': DateTime.now().toIso8601String(),
-          }
-        }),
-      );
-
-      if (createAppUserResponse.statusCode != 200 &&
-          createAppUserResponse.statusCode != 201) {
-        final errorData = jsonDecode(createAppUserResponse.body);
-        return {
-          'success': false,
-          'message': errorData['error']?['message'] ?? 'فشل إنشاء بيانات المستخدم',
-        };
-      }
-
-      final createAppUserData = jsonDecode(createAppUserResponse.body);
-      final appUserId = createAppUserData['data']['id'];
-
-      // \u062a\u062d\u062f\u064a\u062b \u0648\u0633\u062c\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0644\u062a\u0631\u0628\u0637 \u0628\u0640 app_user
+      // تحديث سجل المستخدم مباشرة بدون أي علاقات خارجية
       final updateUserResponse = await http.put(
-        Uri.parse('$baseUrl/api/users/$userId?populate=app_user'),
+        Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'type': 'user',
-          'app_user': appUserId,
+          'userCity': userCity,
+          'userPhone': userPhone,
         }),
       );
 
@@ -168,8 +140,7 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse(
-            '$baseUrl$loginEndpoint?populate=app_user,realstate_realtor,restaurant_provider,driver_provider,drivers_office_provider'),
+        Uri.parse('$baseUrl$loginEndpoint'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'identifier': identifier,
@@ -201,14 +172,9 @@ class AuthService {
     }
   }
 
-  // تحديد نوع المستخدم بناءً على العلاقات
+  // تحديد نوع المستخدم بناءً على الحقل المخصص في السجل
   String? _determineUserType(Map<String, dynamic> userData) {
-    if (userData['app_user'] != null) return 'user';
-    if (userData['realstate_realtor'] != null) return 'realtor';
-    if (userData['restaurant_provider'] != null) return 'restaurant';
-    if (userData['driver_provider'] != null) return 'driver';
-    if (userData['drivers_office_provider'] != null) return 'drivers_office';
-    return null; // لو مافيش نوع
+    return userData['type'];
   }
 
   // حفظ بيانات جلسة المستخدم

@@ -40,11 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // توجيه المستخدم بناءً على نوعه
         if (userType == 'user') {
-          context.go('/user_dashboard');
+          context.go('/UserHomeScreen');
         } else if (userType == 'realtor') {
-          context.go('/realtor_dashboard');
+          context.go('/RealStateHomeScreen');
         } else if (userType == 'restaurant') {
-          context.go('/restaurant_dashboard');
+          context.go('/restaurant-home');
         } else {
           _showMessage('نوع المستخدم غير مدعوم', isError: true);
         }

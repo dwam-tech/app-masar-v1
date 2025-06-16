@@ -537,7 +537,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
       children: [
         GestureDetector(
           onTap: () {
-            context.pop();
+            context.go('/login');
           },
           child: const Text(
             'تسجيل الدخول',

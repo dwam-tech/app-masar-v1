@@ -32,10 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result['success']) {
-        String? userType = result['userType'];
-        if (userType == null) {
-          userType = await _authService.getUserType();
-        }
+        String? userType = result['type'];
         if (userType == null) {
           _showMessage('لم يتم تحديد نوع المستخدم', isError: true);
           return;
@@ -55,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _showMessage(result['message'], isError: true);
       }
     } catch (e) {
-      _showMessage('حدث خطأ أثناء تسجيل الدخول: $e', isError: true);
+      _showMessage('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة لاحقًا', isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -192,7 +189,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => context.push('/forgotPassword'),
+                        child: const Text('هل نسيت كلمة المرور؟'),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(

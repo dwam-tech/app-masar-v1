@@ -109,6 +109,79 @@ class AuthService {
     }
   }
 
+  // تحديث بيانات حساب مكتب عقاري - الخطوة الثانية
+  Future<Map<String, dynamic>> registerRealstateOfficeStep2({
+    required String phone,
+    required String address,
+    required String officeLogo,
+    required String ownerIdFront,
+    required String ownerIdBack,
+    required String officeImage,
+    required String commercialCardFront,
+    required String commercialCardBack,
+    required bool vat,
+  }) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {
+          'success': false,
+          'message': 'يجب تسجيل الدخول أولاً',
+        };
+      }
+
+      final userData = await getUserData();
+      if (userData == null) {
+        return {
+          'success': false,
+          'message': 'بيانات المستخدم غير متوفرة',
+        };
+      }
+
+      final userId = userData['id'];
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'type': 'RealstateOffice',
+          'phone': phone,
+          'RealstateOfficeAddress': address,
+          'RealstateOfficeLogo': officeLogo,
+          'RealstateOfficeOwnerIdFront': ownerIdFront,
+          'RealstateOfficeOwnerIdBack': ownerIdBack,
+          'RealstateOfficeImage': officeImage,
+          'RealstateOfficeCommercialCardFront': commercialCardFront,
+          'RealstateOfficeCommercialCardBack': commercialCardBack,
+          'Vat': vat,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await _updateUserData(responseData);
+        return {
+          'success': true,
+          'data': responseData,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error']?['message'] ?? 'فشل إنشاء بيانات المكتب',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'خطأ في الاتصال بالخادم: $e',
+      };
+    }
+  }
+
   // تسجيل مستخدم جديد وإنشاء سجل app user وربطه بالحساب
   Future<Map<String, dynamic>> registerUser({
     required String username,

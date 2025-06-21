@@ -34,15 +34,16 @@ class AppRouter {
       refreshListenable: authProvider,
       redirect: (context, state) {
         final loggedIn = authProvider.isLoggedIn;
-        final loggingIn = state.subloc == '/login' || state.subloc == '/onboarding';
+        final loggingIn =
+            state.matchedLocation == '/login' || state.matchedLocation == '/onboarding';
 
         if (!loggedIn &&
-            state.subloc != '/login' &&
-            state.subloc != '/register-user' &&
-            state.subloc != '/register-provider' &&
-            state.subloc != '/forgotPassword' &&
-            state.subloc != '/onboarding' &&
-            state.subloc != '/SplashScreen') {
+            state.matchedLocation != '/login' &&
+            state.matchedLocation != '/register-user' &&
+            state.matchedLocation != '/register-provider' &&
+            state.matchedLocation != '/forgotPassword' &&
+            state.matchedLocation != '/onboarding' &&
+            state.matchedLocation != '/SplashScreen') {
           return '/login';
         }
 

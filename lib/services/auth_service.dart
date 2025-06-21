@@ -53,7 +53,7 @@ class AuthService {
   // إضافة بيانات إضافية لمستخدم نوع user - الخطوة الثانية
   Future<Map<String, dynamic>> registerStep2({
     required String userPhone,
-    required String userCity,
+    required String city,
   }) async {
     try {
       final token = await getToken();
@@ -83,7 +83,7 @@ class AuthService {
         body: jsonEncode({
           'type': 'user',
           'userPhone': userPhone,
-          'userCity': userCity
+          'city': city
         }),
       );
 
@@ -188,7 +188,7 @@ class AuthService {
     required String email,
     required String password,
     required String userPhone,
-    required String userCity,
+    required String city,
   }) async {
     final step1 = await registerStep1(
       username: username,
@@ -200,10 +200,59 @@ class AuthService {
 
     final step2 = await registerStep2(
       userPhone: userPhone,
-      userCity: userCity,
+      city: city,
     );
 
     return step2;
+  }
+
+  // تحديث المدينة بعد التسجيل
+  Future<Map<String, dynamic>> updateCity(String city) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return {
+          'success': false,
+          'message': 'يجب تسجيل الدخول أولاً',
+        };
+      }
+
+      final userData = await getUserData();
+      if (userData == null) {
+        return {
+          'success': false,
+          'message': 'بيانات المستخدم غير متوفرة',
+        };
+      }
+
+      final userId = userData['id'];
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'city': city}),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await _updateUserData(responseData);
+        return {'success': true, 'data': responseData};
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error']?['message'] ?? 'فشل تحديث المدينة',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'خطأ في الاتصال بالخادم: $e',
+      };
+    }
   }
 
   // تسجيل الدخول

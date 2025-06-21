@@ -54,11 +54,11 @@ class AuthProvider with ChangeNotifier {
   // تحديث بيانات المستخدم - الخطوة الثانية
   Future<Map<String, dynamic>> registerStep2({
     required String userPhone,
-    required String userCity,
+    required String city,
   }) async {
     final result = await _authService.registerStep2(
       userPhone: userPhone,
-      userCity: userCity,
+      city: city,
     );
 
     if (result['success']) {
@@ -105,20 +105,29 @@ class AuthProvider with ChangeNotifier {
     required String email,
     required String password,
     required String userPhone,
-    required String userCity,
+    required String city,
   }) async {
     final result = await _authService.registerUser(
       username: username,
       email: email,
       password: password,
       userPhone: userPhone,
-      userCity: userCity,
+      city: city,
     );
 
     if (result['success']) {
       await _loadUserSession();
     }
 
+    return result;
+  }
+
+  // تحديث المدينة الحالية
+  Future<Map<String, dynamic>> updateCity(String city) async {
+    final result = await _authService.updateCity(city);
+    if (result['success']) {
+      await _loadUserSession();
+    }
     return result;
   }
 

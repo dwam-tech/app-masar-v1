@@ -1,34 +1,128 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:saba2v2/components/UI/section_title.dart';
 import 'package:saba2v2/providers/service_category_provider.dart';
 import 'package:saba2v2/providers/restaurant_provider.dart';
 import 'package:saba2v2/providers/real_estate_provider.dart';
+import 'package:saba2v2/providers/auth_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:saba2v2/widgets/service_card.dart';
 import 'package:saba2v2/widgets/restaurant_card.dart';
 import 'package:saba2v2/widgets/real_estate_card.dart';
 
-class UserHomeScreen extends StatelessWidget {
+class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
 
   @override
+  State<UserHomeScreen> createState() => _UserHomeScreenState();
+}
+
+class _UserHomeScreenState extends State<UserHomeScreen> {
+  late String _selectedCity;
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<String> _sliderImages = [
+    'https://picsum.photos/id/1011/800/300',
+    'https://picsum.photos/id/984/800/300',
+    'https://picsum.photos/id/888/800/300',
+  ];
+
+  static const List<String> _cities = [
+    'القاهرة',
+    'الجيزة',
+    'الإسكندرية',
+    'الدقهلية',
+    'البحر الأحمر',
+    'البحيرة',
+    'الفيوم',
+    'الغربية',
+    'الإسماعيلية',
+    'المنوفية',
+    'المنيا',
+    'القليوبية',
+    'الوادي الجديد',
+    'السويس',
+    'أسوان',
+    'أسيوط',
+    'بني سويف',
+    'بورسعيد',
+    'دمياط',
+    'الشرقية',
+    'جنوب سيناء',
+    'كفر الشيخ',
+    'مطروح',
+    'الأقصر',
+    'قنا',
+    'شمال سيناء',
+    'سوهاج',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final authProvider = context.read<AuthProvider>();
+    _selectedCity = authProvider.userData?['city'] ?? _cities.first;
+    Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.positions.isNotEmpty) {
+        _currentPage = (_currentPage + 1) % _sliderImages.length;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _changeCity(String? newCity) async {
+    if (newCity == null) return;
+    if (newCity == _selectedCity) return;
+    setState(() => _selectedCity = newCity);
+    await context.read<AuthProvider>().updateCity(newCity);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الرئيسية'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () => context.go('/notifications'),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leadingWidth: 160,
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedCity,
+                  items: _cities
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: _changeCity,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.home),
+                onPressed: () => context.go('/UserHomeScreen'),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => context.go('/profile'),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline),
+              onPressed: () {},
+            ),
+          ],
+          title: const Text('الرئيسية'),
+        ),
+        body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -45,32 +139,24 @@ class UserHomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16.0),
-              // بانر ترويجي (Slider)
-              // Consumer<BannerProvider>(
-              //   builder: (context, provider, child) {
-              //     return CarouselSlider(
-              //       options: CarouselOptions(
-              //         height: 150.0,
-              //         autoPlay: true,
-              //         autoPlayInterval: const Duration(seconds: 3),
-              //         enlargeCenterPage: true,
-              //         aspectRatio: 16 / 9,
-              //         viewportFraction: 0.9,
-              //       ),
-              //       items: provider.banners.map((bannerUrl) {
-              //         return Builder(
-              //           builder: (BuildContext context) {
-              //             return BannerWidget(
-              //               imageUrl: bannerUrl,
-              //               title: 'اطلب الآن',
-              //               subtitle: 'احصل على أفضل العروض اليوم!',
-              //             );
-              //           },
-              //         );
-              //       }).toList(),
-              //     );
-              //   },
-              // ),
+              SizedBox(
+                height: 150,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _sliderImages.length,
+                  itemBuilder: (context, index) {
+                    final url = _sliderImages[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    );
+                  },
+                ),
+              ),
               const SizedBox(height: 16.0),
               // أنواع الخدمات
               SizedBox( width: double.infinity, child: const SectionTitle(title: "اختر الخدمة التي تريد")),
@@ -190,6 +276,7 @@ class UserHomeScreen extends StatelessWidget {
           if (index == 2) context.go('/profile');
         },
       ),
-    );
+    ),
+  );
   }
 }

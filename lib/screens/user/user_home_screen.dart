@@ -91,6 +91,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
+          toolbarHeight: 80,
           automaticallyImplyLeading: false,
           leadingWidth: 160,
           leading: Row(

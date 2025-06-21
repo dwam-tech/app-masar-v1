@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:saba2v2/components/UI/image_picker_row.dart';
 import 'package:saba2v2/components/UI/section_title.dart';
-import 'package:go_router/go_router.dart';
+import 'package:saba2v2/providers/auth_provider.dart';
+import 'package:saba2v2/services/strapi_service.dart';
 
 class SubscriptionRegistrationOfficeScreen extends StatefulWidget {
   const SubscriptionRegistrationOfficeScreen({super.key});
@@ -32,37 +36,121 @@ class _SubscriptionRegistrationOfficeScreenState
   String? _crPhotoBackPath;
 
   Future<void> _pickFile(String fieldName) async {
-    // TODO: Implement actual file picking logic
-    print('Picking file for: $fieldName');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('File picker for $fieldName will be implemented soon')),
-    );
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.isNotEmpty) {
+      final path = result.files.single.path;
+      if (path == null) return;
+      setState(() {
+        switch (fieldName) {
+          case 'officeLogo':
+            _officeLogoPath = path;
+            break;
+          case 'ownerIdFront':
+            _ownerIdFrontPath = path;
+            break;
+          case 'ownerIdBack':
+            _ownerIdBackPath = path;
+            break;
+          case 'officePhotoFront':
+            _officePhotoFrontPath = path;
+            break;
+          case 'crPhotoFront':
+            _crPhotoFrontPath = path;
+            break;
+          case 'crPhotoBack':
+            _crPhotoBackPath = path;
+            break;
+        }
+      });
+    }
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Collect all data for backend
-      final formData = {
-        'officeName': _officeNameController.text,
-        'address': _addressController.text,
-        'phone': _phoneController.text,
-        'email': _emailController.text,
-        'password': _passwordController.text,
-        'includesVat': _includesVat,
-        // Add image paths here when implemented
-      };
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // TODO: Send formData to backend
-      print(formData);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم انشاء الحساب بنجاح'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    if (_passwordController.text != _ConfirmPasswordController.text) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('كلمتا السر غير متطابقتين')));
+      return;
     }
-     context.go('/RealStateHomeScreen');
+
+    if ([
+          _officeLogoPath,
+          _ownerIdFrontPath,
+          _ownerIdBackPath,
+          _officePhotoFrontPath,
+          _crPhotoFrontPath,
+          _crPhotoBackPath
+        ].any((p) => p == null)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('الرجاء اختيار جميع الصور')));
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final step1 = await authProvider.registerStep1(
+      _officeNameController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!step1['success']) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(step1['message'])));
+      return;
+    }
+
+    final token = authProvider.token;
+    if (token == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('خطأ في الجلسة')));
+      return;
+    }
+
+    final strapiService = StrapiService();
+
+    final officeLogoUrl = await strapiService.uploadFile(_officeLogoPath!, token);
+    final ownerIdFrontUrl = await strapiService.uploadFile(_ownerIdFrontPath!, token);
+    final ownerIdBackUrl = await strapiService.uploadFile(_ownerIdBackPath!, token);
+    final officePhotoUrl = await strapiService.uploadFile(_officePhotoFrontPath!, token);
+    final crFrontUrl = await strapiService.uploadFile(_crPhotoFrontPath!, token);
+    final crBackUrl = await strapiService.uploadFile(_crPhotoBackPath!, token);
+
+    if ([
+          officeLogoUrl,
+          ownerIdFrontUrl,
+          ownerIdBackUrl,
+          officePhotoUrl,
+          crFrontUrl,
+          crBackUrl
+        ].any((u) => u == null)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع الملفات')));
+      return;
+    }
+
+    final step2 = await authProvider.registerRealstateOfficeStep2(
+      phone: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+      officeLogo: officeLogoUrl!,
+      ownerIdFront: ownerIdFrontUrl!,
+      ownerIdBack: ownerIdBackUrl!,
+      officeImage: officePhotoUrl!,
+      commercialCardFront: crFrontUrl!,
+      commercialCardBack: crBackUrl!,
+      vat: _includesVat,
+    );
+
+    if (step2['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم انشاء الحساب بنجاح'), backgroundColor: Colors.green));
+      if (mounted) {
+        context.go('/RealStateHomeScreen');
+      }
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(step2['message'])));
+    }
   }
 
   Widget _buildFormField({
@@ -259,6 +347,7 @@ class _SubscriptionRegistrationOfficeScreenState
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _ConfirmPasswordController.dispose();
     super.dispose();
   }
 }

@@ -68,6 +68,37 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
+  // تحديث بيانات مكتب العقارات - الخطوة الثانية
+  Future<Map<String, dynamic>> registerRealstateOfficeStep2({
+    required String phone,
+    required String address,
+    required String officeLogo,
+    required String ownerIdFront,
+    required String ownerIdBack,
+    required String officeImage,
+    required String commercialCardFront,
+    required String commercialCardBack,
+    required bool vat,
+  }) async {
+    final result = await _authService.registerRealstateOfficeStep2(
+      phone: phone,
+      address: address,
+      officeLogo: officeLogo,
+      ownerIdFront: ownerIdFront,
+      ownerIdBack: ownerIdBack,
+      officeImage: officeImage,
+      commercialCardFront: commercialCardFront,
+      commercialCardBack: commercialCardBack,
+      vat: vat,
+    );
+
+    if (result['success']) {
+      await _loadUserSession();
+    }
+
+    return result;
+  }
+
   // تسجيل مستخدم جديد وإنشاء app user مباشرة
   Future<Map<String, dynamic>> registerUser({
     required String username,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:saba2v2/services/auth_service.dart'; // استبدل your_project_name باسم مشروعك
+import 'package:provider/provider.dart';
+import 'package:saba2v2/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +14,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
   bool _isLoading = false;
 
   Future<void> _login() async {
@@ -26,9 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final result = await _authService.login(
-        identifier: _emailController.text.trim(),
-        password: _passwordController.text,
+      final result = await context.read<AuthProvider>().login(
+        _emailController.text.trim(),
+        _passwordController.text,
       );
 
       if (result['success']) {

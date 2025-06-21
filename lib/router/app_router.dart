@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:saba2v2/providers/auth_provider.dart';
 import 'package:saba2v2/screens/auth/login_screen.dart';
 import 'package:saba2v2/screens/auth/register_user_screen.dart';
 import 'package:saba2v2/screens/auth/register_provider_screen.dart';
@@ -27,9 +28,30 @@ import 'package:saba2v2/screens/user/user_home_screen.dart';
 import 'package:saba2v2/screens/business/CarsScreens/delivery_office_information.dart';
 
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/login',
-    routes: [
+  static GoRouter createRouter(AuthProvider authProvider) {
+    return GoRouter(
+      initialLocation: '/login',
+      refreshListenable: authProvider,
+      redirect: (context, state) {
+        final loggedIn = authProvider.isLoggedIn;
+        final loggingIn = state.subloc == '/login' || state.subloc == '/onboarding';
+
+        if (!loggedIn &&
+            state.subloc != '/login' &&
+            state.subloc != '/register-user' &&
+            state.subloc != '/register-provider' &&
+            state.subloc != '/forgotPassword' &&
+            state.subloc != '/onboarding' &&
+            state.subloc != '/SplashScreen') {
+          return '/login';
+        }
+
+        if (loggedIn && loggingIn) {
+          return '/UserHomeScreen';
+        }
+        return null;
+      },
+      routes: [
       // **********************************************************************
       // *                          الشاشات العامة                            *
       // **********************************************************************
@@ -208,4 +230,4 @@ class AppRouter {
       ),
     ),
   );
-}
+}}

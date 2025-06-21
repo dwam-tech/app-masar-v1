@@ -10,6 +10,7 @@ import 'package:saba2v2/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:saba2v2/widgets/service_card.dart';
 import 'package:saba2v2/widgets/restaurant_card.dart';
+import 'package:saba2v2/widgets/restaurant_slider_card.dart';
 import 'package:saba2v2/widgets/real_estate_card.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -221,18 +222,27 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               const SizedBox(height: 8.0),
               Consumer<RestaurantProvider>(
                 builder: (context, provider, child) {
-                  return Column(
-                    children: provider.recommendedRestaurants.map((restaurant) {
-                      return RestaurantCard(
-                        id: restaurant.id,
-                        imageUrl: restaurant.imageUrl,
-                        name: restaurant.name,
-                        category: restaurant.category,
-                        location: restaurant.location,
-                        onTap: () =>
-                            context.go('/restaurant-details/${restaurant.id}'),
-                      );
-                    }).toList(),
+                  return SizedBox(
+                    height: 190,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: provider.recommendedRestaurants.length,
+                      itemBuilder: (context, index) {
+                        final restaurant = provider.recommendedRestaurants[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: RestaurantSliderCard(
+                            id: restaurant.id,
+                            imageUrl: restaurant.imageUrl,
+                            name: restaurant.name,
+                            category: restaurant.category,
+                            location: restaurant.location,
+                            onTap: () =>
+                                context.go('/restaurant-details/${restaurant.id}'),
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

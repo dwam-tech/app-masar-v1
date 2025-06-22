@@ -45,9 +45,17 @@ class AppRouter {
             state.matchedLocation != '/forgotPassword' &&
             state.matchedLocation != '/onboarding' &&
             state.matchedLocation != '/SplashScreen' &&
-            state.matchedLocation != '/ResturantLawData' &&
+            state.matchedLocation != '/cooking-registration' &&
+            state.matchedLocation != '/delivery-registration' &&
             state.matchedLocation != '/subscription-registration' &&
-            state.matchedLocation != '/delivery-registration') {
+            state.matchedLocation != '/SubscriptionRegistrationOfficeScreen' &&
+            state.matchedLocation != '/SubscriptionRegistrationSingleScreen' &&
+            state.matchedLocation != '/AddNewStateScreen' &&
+            state.matchedLocation != '/ResturantLawData' &&
+            state.matchedLocation != '/ResturantInformation' &&
+            state.matchedLocation != '/ResturantWorkTime' &&
+            state.matchedLocation != '/delivery-office-information' &&
+            state.matchedLocation != '/DeliveryPersonInformationScreen') {
           return '/login';
         }
 

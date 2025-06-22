@@ -44,7 +44,10 @@ class AppRouter {
             state.matchedLocation != '/register-provider' &&
             state.matchedLocation != '/forgotPassword' &&
             state.matchedLocation != '/onboarding' &&
-            state.matchedLocation != '/SplashScreen') {
+            state.matchedLocation != '/SplashScreen' &&
+            state.matchedLocation != '/ResturantLawData' &&
+            state.matchedLocation != '/subscription-registration' &&
+            state.matchedLocation != '/delivery-registration') {
           return '/login';
         }
 

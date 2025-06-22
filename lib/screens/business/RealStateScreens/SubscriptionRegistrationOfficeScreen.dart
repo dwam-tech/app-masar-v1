@@ -95,6 +95,31 @@ class _SubscriptionRegistrationOfficeScreenState
     }
   }
 
+  void _removeFile(String fieldName) {
+    setState(() {
+      switch (fieldName) {
+        case 'officeLogo':
+          _officeLogoPath = null;
+          break;
+        case 'ownerIdFront':
+          _ownerIdFrontPath = null;
+          break;
+        case 'ownerIdBack':
+          _ownerIdBackPath = null;
+          break;
+        case 'officePhotoFront':
+          _officePhotoFrontPath = null;
+          break;
+        case 'crPhotoFront':
+          _crPhotoFrontPath = null;
+          break;
+        case 'crPhotoBack':
+          _crPhotoBackPath = null;
+          break;
+      }
+    });
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -272,6 +297,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'officeLogo',
                 onTap: () => _pickFile('officeLogo'),
+                imagePath: _officeLogoPath,
+                onRemove: () => _removeFile('officeLogo'),
               ),
 
               // Section 2: Owner ID
@@ -285,6 +312,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'ownerIdFront',
                 onTap: () => _pickFile('ownerIdFront'),
+                imagePath: _ownerIdFrontPath,
+                onRemove: () => _removeFile('ownerIdFront'),
               ),
               const SizedBox(height: 12),
               ImagePickerRow(
@@ -292,6 +321,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'ownerIdBack',
                 onTap: () => _pickFile('ownerIdBack'),
+                imagePath: _ownerIdBackPath,
+                onRemove: () => _removeFile('ownerIdBack'),
               ),
 
               // Section 3: Office Photos
@@ -305,6 +336,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'officePhotoFront',
                 onTap: () => _pickFile('officePhotoFront'),
+                imagePath: _officePhotoFrontPath,
+                onRemove: () => _removeFile('officePhotoFront'),
               ),
 
               // Section 4: Commercial Register
@@ -318,6 +351,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'crPhotoFront',
                 onTap: () => _pickFile('crPhotoFront'),
+                imagePath: _crPhotoFrontPath,
+                onRemove: () => _removeFile('crPhotoFront'),
               ),
               const SizedBox(height: 12),
               ImagePickerRow(
@@ -325,6 +360,8 @@ class _SubscriptionRegistrationOfficeScreenState
                 icon: Icons.image_outlined,
                 fieldIdentifier: 'crPhotoBack',
                 onTap: () => _pickFile('crPhotoBack'),
+                imagePath: _crPhotoBackPath,
+                onRemove: () => _removeFile('crPhotoBack'),
               ),
 
               // Section 5: VAT

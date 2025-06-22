@@ -44,8 +44,12 @@
         </intent>
     </queries>
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Permissions required for picking images from the device -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Permissions required for picking images from the device.
+         READ_MEDIA_IMAGES is used on Android 13+ while READ_EXTERNAL_STORAGE
+         acts as a fallback for older versions. -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
 

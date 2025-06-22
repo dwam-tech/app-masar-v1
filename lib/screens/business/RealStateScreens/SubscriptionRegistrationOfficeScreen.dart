@@ -38,8 +38,16 @@ class _SubscriptionRegistrationOfficeScreenState
   String? _crPhotoBackPath;
 
   Future<void> _pickFile(String fieldName) async {
-    final permission = Platform.isIOS ? Permission.photos : Permission.storage;
-    final status = await permission.request();
+    // On Android 13+ the `photos` permission maps to READ_MEDIA_IMAGES.
+    // Older Android versions still rely on the storage permission so we
+    // request both when necessary. iOS only requires the photos permission.
+    PermissionStatus status = await Permission.photos.request();
+
+    if (!status.isGranted && Platform.isAndroid) {
+      // Fallback for Android 12 and below
+      status = await Permission.storage.request();
+    }
+
     if (!status.isGranted) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -50,9 +58,18 @@ class _SubscriptionRegistrationOfficeScreenState
     }
 
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.isNotEmpty) {
-      final path = result.files.single.path;
-      if (path == null) return;
+    if (result == null || result.files.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('لم يتم العثور على صور. تأكد من وجود صور على الجهاز أو في المحاكي')),
+        );
+      }
+      return;
+    }
+
+    final path = result.files.single.path;
+    if (path != null) {
       setState(() {
         switch (fieldName) {
           case 'officeLogo':

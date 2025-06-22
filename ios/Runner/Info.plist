@@ -47,7 +47,11 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<true/>
-		<key>UIViewControllerBasedStatusBarAppearance</key>
-		<false/>
-	</dict>
+                <key>UIViewControllerBasedStatusBarAppearance</key>
+                <false/>
+                <key>NSPhotoLibraryUsageDescription</key>
+                <string>يحتاج التطبيق إلى الوصول إلى الصور لاختيار ملفات التحميل</string>
+                <key>NSPhotoLibraryAddUsageDescription</key>
+                <string>يتيح هذا الإذن حفظ الصور بعد اختيارها</string>
+        </dict>
 </plist>

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 import 'package:saba2v2/components/UI/image_picker_row.dart';
 import 'package:saba2v2/components/UI/section_title.dart';
 import 'package:saba2v2/providers/auth_provider.dart';
@@ -36,6 +38,17 @@ class _SubscriptionRegistrationOfficeScreenState
   String? _crPhotoBackPath;
 
   Future<void> _pickFile(String fieldName) async {
+    final permission = Platform.isIOS ? Permission.photos : Permission.storage;
+    final status = await permission.request();
+    if (!status.isGranted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('الرجاء منح صلاحية الوصول للصور')),
+        );
+      }
+      return;
+    }
+
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.isNotEmpty) {
       final path = result.files.single.path;

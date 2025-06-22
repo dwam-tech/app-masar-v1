@@ -37,6 +37,20 @@ class _SubscriptionRegistrationOfficeScreenState
   String? _crPhotoFrontPath;
   String? _crPhotoBackPath;
 
+  String? _selectedCity;
+  final List<String> _cities = [
+    'الرياض',
+    'جدة',
+    'مكة المكرمة',
+    'المدينة المنورة',
+    'الدمام',
+    'الخبر',
+    'تبوك',
+    'أبها',
+    'القصيم',
+    'حائل',
+  ];
+
   Future<void> _pickFile(String fieldName) async {
     // On Android 13+ the `photos` permission maps to READ_MEDIA_IMAGES.
     // Older Android versions still rely on the storage permission so we
@@ -186,6 +200,7 @@ class _SubscriptionRegistrationOfficeScreenState
 
     final step2 = await authProvider.registerRealstateOfficeStep2(
       phone: _phoneController.text.trim(),
+      city: _selectedCity!,
       address: _addressController.text.trim(),
       officeLogo: officeLogoId!,
       ownerIdFront: ownerIdFrontId!,
@@ -274,6 +289,48 @@ class _SubscriptionRegistrationOfficeScreenState
               _buildFormField(
                 hintText: 'رقم الهاتف',
                 controller: _phoneController,
+              ),
+              const SizedBox(height: 16),
+              Directionality(
+                textDirection: TextDirection.rtl,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedCity,
+                  alignment: AlignmentDirectional.centerEnd,
+                  decoration: InputDecoration(
+                    labelText: 'المحافظة',
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 15.0,
+                      horizontal: 20.0,
+                    ),
+                  ),
+                  icon: const Padding(
+                    padding: EdgeInsets.only(left: 12.0),
+                    child: Icon(Icons.keyboard_arrow_down),
+                  ),
+                  iconSize: 28,
+                  iconEnabledColor: Colors.grey[600],
+                  items: _cities.map((String city) {
+                    return DropdownMenuItem<String>(
+                      value: city,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(
+                        city,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() => _selectedCity = newValue);
+                  },
+                  validator: (value) => value == null ? 'الرجاء اختيار المحافظة' : null,
+                ),
               ),
               const SizedBox(height: 16),
               _buildFormField(

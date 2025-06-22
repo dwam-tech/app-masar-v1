@@ -71,6 +71,7 @@ class AuthProvider with ChangeNotifier {
   // تحديث بيانات مكتب العقارات - الخطوة الثانية
   Future<Map<String, dynamic>> registerRealstateOfficeStep2({
     required String phone,
+    required String city,
     required String address,
     required int officeLogo,
     required int ownerIdFront,
@@ -90,6 +91,7 @@ class AuthProvider with ChangeNotifier {
       commercialCardFront: commercialCardFront,
       commercialCardBack: commercialCardBack,
       vat: vat,
+      city: city,
     );
 
     if (result['success']) {

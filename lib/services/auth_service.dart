@@ -112,6 +112,7 @@ class AuthService {
   // تحديث بيانات حساب مكتب عقاري - الخطوة الثانية
   Future<Map<String, dynamic>> registerRealstateOfficeStep2({
     required String phone,
+    required String city,
     required String address,
     required int officeLogo,
     required int ownerIdFront,
@@ -149,6 +150,7 @@ class AuthService {
         body: jsonEncode({
           'type': 'RealstateOffice',
           'phone': phone,
+          'city': city,
           'RealstateOfficeAddress': address,
           'RealstateOfficeLogo': officeLogo,
           'RealstateOfficeOwnerIdFront': ownerIdFront,

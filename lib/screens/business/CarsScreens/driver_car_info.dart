@@ -76,6 +76,31 @@ class _DriverCarInfoState extends State<DriverCarInfo> {
     });
   }
 
+  void _removeImage(String fieldIdentifier) {
+    setState(() {
+      switch (fieldIdentifier) {
+        case 'license_front':
+          _licenseFrontImagePath = null;
+          break;
+        case 'license_back':
+          _licenseBackImagePath = null;
+          break;
+        case 'car_registration_front':
+          _carRegistrationFrontImagePath = null;
+          break;
+        case 'car_registration_back':
+          _carRegistrationBackImagePath = null;
+          break;
+        case 'car_front':
+          _carFrontImagePath = null;
+          break;
+        case 'car_back':
+          _carBackImagePath = null;
+          break;
+      }
+    });
+  }
+
   // Form Submission
   void _onSubmit() {
     if (_formKey.currentState!.validate()) {
@@ -143,6 +168,8 @@ class _DriverCarInfoState extends State<DriverCarInfo> {
               icon: Icons.camera_alt,
               fieldIdentifier: fieldIdentifier,
               onTap: () => _pickImage(fieldIdentifier),
+              imagePath: imagePath,
+              onRemove: () => _removeImage(fieldIdentifier),
             ),
             if (validator(imagePath) != null)
               Padding(

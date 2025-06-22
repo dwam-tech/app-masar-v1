@@ -72,12 +72,12 @@ class AuthProvider with ChangeNotifier {
   Future<Map<String, dynamic>> registerRealstateOfficeStep2({
     required String phone,
     required String address,
-    required String officeLogo,
-    required String ownerIdFront,
-    required String ownerIdBack,
-    required String officeImage,
-    required String commercialCardFront,
-    required String commercialCardBack,
+    required int officeLogo,
+    required int ownerIdFront,
+    required int ownerIdBack,
+    required int officeImage,
+    required int commercialCardFront,
+    required int commercialCardBack,
     required bool vat,
   }) async {
     final result = await _authService.registerRealstateOfficeStep2(

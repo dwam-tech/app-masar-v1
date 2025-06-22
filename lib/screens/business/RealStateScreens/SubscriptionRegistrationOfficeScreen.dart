@@ -109,20 +109,20 @@ class _SubscriptionRegistrationOfficeScreenState
 
     final strapiService = StrapiService();
 
-    final officeLogoUrl = await strapiService.uploadFile(_officeLogoPath!, token);
-    final ownerIdFrontUrl = await strapiService.uploadFile(_ownerIdFrontPath!, token);
-    final ownerIdBackUrl = await strapiService.uploadFile(_ownerIdBackPath!, token);
-    final officePhotoUrl = await strapiService.uploadFile(_officePhotoFrontPath!, token);
-    final crFrontUrl = await strapiService.uploadFile(_crPhotoFrontPath!, token);
-    final crBackUrl = await strapiService.uploadFile(_crPhotoBackPath!, token);
+    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!, token);
+    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!, token);
+    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!, token);
+    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!, token);
+    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!, token);
+    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!, token);
 
     if ([
-          officeLogoUrl,
-          ownerIdFrontUrl,
-          ownerIdBackUrl,
-          officePhotoUrl,
-          crFrontUrl,
-          crBackUrl
+          officeLogoId,
+          ownerIdFrontId,
+          ownerIdBackId,
+          officePhotoId,
+          crFrontId,
+          crBackId
         ].any((u) => u == null)) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('فشل رفع الملفات')));
@@ -132,12 +132,12 @@ class _SubscriptionRegistrationOfficeScreenState
     final step2 = await authProvider.registerRealstateOfficeStep2(
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
-      officeLogo: officeLogoUrl!,
-      ownerIdFront: ownerIdFrontUrl!,
-      ownerIdBack: ownerIdBackUrl!,
-      officeImage: officePhotoUrl!,
-      commercialCardFront: crFrontUrl!,
-      commercialCardBack: crBackUrl!,
+      officeLogo: officeLogoId!,
+      ownerIdFront: ownerIdFrontId!,
+      ownerIdBack: ownerIdBackId!,
+      officeImage: officePhotoId!,
+      commercialCardFront: crFrontId!,
+      commercialCardBack: crBackId!,
       vat: _includesVat,
     );
 

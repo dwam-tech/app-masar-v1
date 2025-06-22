@@ -25,6 +25,7 @@ import 'package:saba2v2/screens/business/RealStateScreens/RealStateHomeScreen.da
 import 'package:saba2v2/screens/splash/splash_screen.dart';
 import 'package:saba2v2/screens/auth/forgotPassword.dart';
 import 'package:saba2v2/screens/user/user_home_screen.dart';
+import 'package:saba2v2/screens/user/profile_screen.dart';
 import 'package:saba2v2/screens/business/CarsScreens/delivery_office_information.dart';
 
 class AppRouter {
@@ -209,6 +210,11 @@ class AppRouter {
         path: '/UserHomeScreen',
         name: 'UserHomeScreen',
         builder: (context, state) => const UserHomeScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
 
       // **********************************************************************

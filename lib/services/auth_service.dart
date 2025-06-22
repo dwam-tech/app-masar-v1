@@ -114,12 +114,12 @@ class AuthService {
     required String phone,
     required String city,
     required String address,
-    required int officeLogo,
-    required int ownerIdFront,
-    required int ownerIdBack,
-    required int officeImage,
-    required int commercialCardFront,
-    required int commercialCardBack,
+    int? officeLogo,
+    int? ownerIdFront,
+    int? ownerIdBack,
+    int? officeImage,
+    int? commercialCardFront,
+    int? commercialCardBack,
     required bool vat,
   }) async {
     try {
@@ -205,6 +205,77 @@ class AuthService {
       return {
         'success': false,
         'message': 'خطأ في الاتصال بالخادم: $e',
+      };
+    }
+  }
+
+  // تسجيل مكتب عقاري متكامل مع رفع الملفات وإنشاء السجل
+  Future<Map<String, dynamic>> registerRealstateOffice({
+    required String username,
+    required String email,
+    required String password,
+    required String phone,
+    required String city,
+    required String address,
+    bool vat = false,
+    String? officeLogoPath,
+    String? ownerIdFrontPath,
+    String? ownerIdBackPath,
+    String? officeImagePath,
+    String? commercialCardFrontPath,
+    String? commercialCardBackPath,
+  }) async {
+    // الخطوة الأولى: إنشاء الحساب
+    final step1 = await registerStep1(
+      username: username,
+      email: email,
+      password: password,
+    );
+
+    if (!step1['success']) return step1;
+
+    final token = await getToken();
+    final userData = await getUserData();
+    if (token == null || userData == null) {
+      return {
+        'success': false,
+        'message': 'فشل إنشاء الجلسة بعد التسجيل',
+      };
+    }
+
+    final userId = userData['id'];
+
+    try {
+      final officeLogoId = await _uploadFile(officeLogoPath, token);
+      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath, token);
+      final ownerIdBackId = await _uploadFile(ownerIdBackPath, token);
+      final officeImageId = await _uploadFile(officeImagePath, token);
+      final crFrontId = await _uploadFile(commercialCardFrontPath, token);
+      final crBackId = await _uploadFile(commercialCardBackPath, token);
+
+      final step2 = await registerRealstateOfficeStep2(
+        phone: phone,
+        city: city,
+        address: address,
+        officeLogo: officeLogoId,
+        ownerIdFront: ownerIdFrontId,
+        ownerIdBack: ownerIdBackId,
+        officeImage: officeImageId,
+        commercialCardFront: crFrontId,
+        commercialCardBack: crBackId,
+        vat: vat,
+      );
+
+      if (!step2['success']) {
+        await _deleteUser(userId, token);
+      }
+
+      return step2;
+    } catch (e) {
+      await _deleteUser(userId, token);
+      return {
+        'success': false,
+        'message': 'حدث خطأ أثناء إنشاء الحساب: $e',
       };
     }
   }
@@ -389,5 +460,41 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(tokenKey);
     await prefs.remove(userDataKey);
+  }
+
+  // التحقق من امتداد الملف المرفوع
+  bool _isValidFileType(String path) {
+    final allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+    final ext = path.split('.').last.toLowerCase();
+    return allowed.contains(ext);
+  }
+
+  // رفع ملف وإرجاع معرفه
+  Future<int?> _uploadFile(String? path, String token) async {
+    if (path == null) return null;
+    if (!_isValidFileType(path)) {
+      throw Exception('نوع ملف غير مدعوم');
+    }
+    final uri = Uri.parse('$baseUrl/api/upload');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(await http.MultipartFile.fromPath('files', path));
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+    if (response.statusCode == 200) {
+      final data = jsonDecode(body);
+      if (data is List && data.isNotEmpty) {
+        return data[0]['id'] as int?;
+      }
+    }
+    throw Exception('فشل رفع الملف');
+  }
+
+  // حذف مستخدم في حال حدوث خطأ
+  Future<void> _deleteUser(int userId, String token) async {
+    await http.delete(
+      Uri.parse('$baseUrl/api/users/$userId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
   }
 }

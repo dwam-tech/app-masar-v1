@@ -109,7 +109,7 @@ class AuthService {
     }
   }
 
-  // تحديث بيانات حساب مكتب عقاري - الخطوة الثانية
+  // تحديث بيانات حساب مكتب عقاري وإنشاء سجل RealstateOfficeProfile
   Future<Map<String, dynamic>> registerRealstateOfficeStep2({
     required String phone,
     required String city,
@@ -141,7 +141,8 @@ class AuthService {
 
       final userId = userData['id'];
 
-      final response = await http.put(
+      // تحديث بيانات المستخدم العامة
+      final updateResponse = await http.put(
         Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -151,29 +152,53 @@ class AuthService {
           'type': 'RealstateOffice',
           'phone': phone,
           'city': city,
-          'RealstateOfficeAddress': address,
-          'RealstateOfficeLogo': officeLogo,
-          'RealstateOfficeOwnerIdFront': ownerIdFront,
-          'RealstateOfficeOwnerIdBack': ownerIdBack,
-          'RealstateOfficeImage': officeImage,
-          'RealstateOfficeCommercialCardFront': commercialCardFront,
-          'RealstateOfficeCommercialCardBack': commercialCardBack,
-          'Vat': vat,
         }),
       );
 
-      final responseData = jsonDecode(response.body);
+      final updateData = jsonDecode(updateResponse.body);
 
-      if (response.statusCode == 200) {
-        await _updateUserData(responseData);
+      if (updateResponse.statusCode != 200) {
+        return {
+          'success': false,
+          'message': updateData['error']?['message'] ?? 'فشل تحديث بيانات المستخدم',
+        };
+      }
+
+      await _updateUserData(updateData);
+
+      // إنشاء سجل RealstateOfficeProfile
+      final profileResponse = await http.post(
+        Uri.parse('$baseUrl/api/realstate-office-profiles'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'data': {
+            'RealstateOfficeLogo': officeLogo,
+            'RealstateOfficeOwnerIdFront': ownerIdFront,
+            'RealstateOfficeOwnerIdBack': ownerIdBack,
+            'RealstateOfficeImage': officeImage,
+            'RealstateOfficeCommercialCardFront': commercialCardFront,
+            'RealstateOfficeCommercialCardBack': commercialCardBack,
+            'Vat': vat,
+            'RealstateOfficeAddress': address,
+            'user': userId,
+          }
+        }),
+      );
+
+      final profileData = jsonDecode(profileResponse.body);
+
+      if (profileResponse.statusCode == 200 || profileResponse.statusCode == 201) {
         return {
           'success': true,
-          'data': responseData,
+          'data': profileData,
         };
       } else {
         return {
           'success': false,
-          'message': responseData['error']?['message'] ?? 'فشل إنشاء بيانات المكتب',
+          'message': profileData['error']?['message'] ?? 'فشل إنشاء بيانات المكتب',
         };
       }
     } catch (e) {

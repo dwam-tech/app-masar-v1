@@ -175,10 +175,11 @@ class AuthService {
             refreshed = jsonDecode(fetchResponse.body);
           }
         }
-        await _updateUserData(refreshed);
+
+        await _updateUserData(updateData);
         return {
           'success': true,
-          'data': refreshed,
+          'data': updateData,
         };
       } else {
         return {

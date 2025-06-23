@@ -169,42 +169,68 @@ class _SubscriptionRegistrationOfficeScreenState
       return;
     }
 
-    final strapiService = StrapiService();
-
-    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!);
-    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!);
-    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!);
-    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!);
-    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!);
-    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!);
-
-    if ([
-          officeLogoId,
-          ownerIdFrontId,
-          ownerIdBackId,
-          officePhotoId,
-          crFrontId,
-          crBackId
-        ].any((u) => u == null)) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع الملفات')));
-      return;
-    }
-
-    final step2 = await authProvider.registerRealstateOfficeStep2(
+    final step2 = await authProvider.updateRealstateOfficeDetails(
       phone: _phoneController.text.trim(),
       city: _selectedCity!,
       address: _addressController.text.trim(),
-      officeLogo: officeLogoId!,
-      ownerIdFront: ownerIdFrontId!,
-      ownerIdBack: ownerIdBackId!,
-      officeImage: officePhotoId!,
-      commercialCardFront: crFrontId!,
-      commercialCardBack: crBackId!,
       vat: _includesVat,
     );
 
-    if (step2['success']) {
+    if (!step2['success']) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(step2['message'])));
+      return;
+    }
+
+    final strapiService = StrapiService();
+
+    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!);
+    if (officeLogoId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع شعار المكتب')));
+      return;
+    }
+    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!);
+    if (ownerIdFrontId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع هوية المالك الأمامية')));
+      return;
+    }
+    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!);
+    if (ownerIdBackId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع هوية المالك الخلفية')));
+      return;
+    }
+    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!);
+    if (officePhotoId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع صورة المكتب')));
+      return;
+    }
+    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!);
+    if (crFrontId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع السجل التجاري الأمامي')));
+      return;
+    }
+    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!);
+    if (crBackId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('فشل رفع السجل التجاري الخلفي')));
+      return;
+    }
+
+    final step4 = await authProvider.updateRealstateOfficeMedia(
+      officeLogo: officeLogoId,
+      ownerIdFront: ownerIdFrontId,
+      ownerIdBack: ownerIdBackId,
+      officeImage: officePhotoId,
+      commercialCardFront: crFrontId,
+      commercialCardBack: crBackId,
+    );
+
+    if (step4['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم انشاء الحساب بنجاح'), backgroundColor: Colors.green));
       if (mounted) {
@@ -212,7 +238,7 @@ class _SubscriptionRegistrationOfficeScreenState
       }
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(step2['message'])));
+          .showSnackBar(SnackBar(content: Text(step4['message'])));
     }
   }
 

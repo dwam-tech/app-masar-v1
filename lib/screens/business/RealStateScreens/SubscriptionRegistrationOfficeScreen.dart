@@ -7,7 +7,6 @@ import 'dart:io';
 import 'package:saba2v2/components/UI/image_picker_row.dart';
 import 'package:saba2v2/components/UI/section_title.dart';
 import 'package:saba2v2/providers/auth_provider.dart';
-import 'package:saba2v2/services/strapi_service.dart';
 
 class SubscriptionRegistrationOfficeScreen extends StatefulWidget {
   const SubscriptionRegistrationOfficeScreen({super.key});
@@ -157,80 +156,23 @@ class _SubscriptionRegistrationOfficeScreenState
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final step1 = await authProvider.registerStep1(
-      _officeNameController.text.trim(),
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (!step1['success']) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(step1['message'])));
-      return;
-    }
-
-    final step2 = await authProvider.updateRealstateOfficeDetails(
+    final result = await authProvider.registerRealstateOffice(
+      username: _officeNameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
       phone: _phoneController.text.trim(),
       city: _selectedCity!,
       address: _addressController.text.trim(),
       vat: _includesVat,
+      officeLogoPath: _officeLogoPath!,
+      ownerIdFrontPath: _ownerIdFrontPath!,
+      ownerIdBackPath: _ownerIdBackPath!,
+      officeImagePath: _officePhotoFrontPath!,
+      commercialCardFrontPath: _crPhotoFrontPath!,
+      commercialCardBackPath: _crPhotoBackPath!,
     );
 
-    if (!step2['success']) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(step2['message'])));
-      return;
-    }
-
-    final strapiService = StrapiService();
-
-    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!);
-    if (officeLogoId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع شعار المكتب')));
-      return;
-    }
-    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!);
-    if (ownerIdFrontId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع هوية المالك الأمامية')));
-      return;
-    }
-    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!);
-    if (ownerIdBackId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع هوية المالك الخلفية')));
-      return;
-    }
-    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!);
-    if (officePhotoId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع صورة المكتب')));
-      return;
-    }
-    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!);
-    if (crFrontId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع السجل التجاري الأمامي')));
-      return;
-    }
-    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!);
-    if (crBackId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('فشل رفع السجل التجاري الخلفي')));
-      return;
-    }
-
-    final step4 = await authProvider.updateRealstateOfficeMedia(
-      officeLogo: officeLogoId,
-      ownerIdFront: ownerIdFrontId,
-      ownerIdBack: ownerIdBackId,
-      officeImage: officePhotoId,
-      commercialCardFront: crFrontId,
-      commercialCardBack: crBackId,
-    );
-
-    if (step4['success']) {
+    if (result['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم انشاء الحساب بنجاح'), backgroundColor: Colors.green));
       if (mounted) {
@@ -238,7 +180,7 @@ class _SubscriptionRegistrationOfficeScreenState
       }
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(step4['message'])));
+          .showSnackBar(SnackBar(content: Text(result['message'])));
     }
   }
 

@@ -164,6 +164,7 @@ class AuthService {
         final userToken = await getToken();
         Map<String, dynamic> refreshed = updateData;
         if (userToken != null) {
+          // Fetch the latest user info so newly linked media are included
           final fetchResponse = await http.get(
             Uri.parse('$baseUrl/api/users/me?populate=*'),
             headers: {

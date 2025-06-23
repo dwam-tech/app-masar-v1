@@ -311,7 +311,52 @@ class AuthService {
     String? commercialCardFrontPath,
     String? commercialCardBackPath,
   }) async {
-    // الخطوة الأولى: إنشاء الحساب
+    int? officeLogoId;
+    int? ownerIdFrontId;
+    int? ownerIdBackId;
+    int? officeImageId;
+    int? crFrontId;
+    int? crBackId;
+
+    try {
+      // ارفع الملفات المطلوبة أولاً
+      officeLogoId = await _uploadFile(officeLogoPath);
+      if (officeLogoPath != null && officeLogoId == null) {
+        throw Exception('فشل رفع شعار المكتب');
+      }
+
+      ownerIdFrontId = await _uploadFile(ownerIdFrontPath);
+      if (ownerIdFrontPath != null && ownerIdFrontId == null) {
+        throw Exception('فشل رفع هوية المالك الأمامية');
+      }
+
+      ownerIdBackId = await _uploadFile(ownerIdBackPath);
+      if (ownerIdBackPath != null && ownerIdBackId == null) {
+        throw Exception('فشل رفع هوية المالك الخلفية');
+      }
+
+      officeImageId = await _uploadFile(officeImagePath);
+      if (officeImagePath != null && officeImageId == null) {
+        throw Exception('فشل رفع صورة المكتب');
+      }
+
+      crFrontId = await _uploadFile(commercialCardFrontPath);
+      if (commercialCardFrontPath != null && crFrontId == null) {
+        throw Exception('فشل رفع السجل التجاري الأمامي');
+      }
+
+      crBackId = await _uploadFile(commercialCardBackPath);
+      if (commercialCardBackPath != null && crBackId == null) {
+        throw Exception('فشل رفع السجل التجاري الخلفي');
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'خطأ في رفع الملفات: $e',
+      };
+    }
+
+    // بعد رفع الملفات بنجاح، أنشئ الحساب
     final step1 = await registerStep1(
       username: username,
       email: email,
@@ -332,59 +377,43 @@ class AuthService {
     final userId = userData['id'];
 
     try {
-      // الخطوة الثانية: تحديث الحقول النصية فقط
-      final details = await updateRealstateOfficeDetails(
-        phone: phone,
-        city: city,
-        address: address,
-        vat: vat,
-      );
-      if (!details['success']) {
-        await _deleteUser(userId, token);
-        return details;
-      }
-
-      // الخطوة الثالثة: رفع الصور بشكل منفصل
-      final officeLogoId = await _uploadFile(officeLogoPath);
-      if (officeLogoPath != null && officeLogoId == null) {
-        throw Exception('فشل رفع شعار المكتب');
-      }
-      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath);
-      if (ownerIdFrontPath != null && ownerIdFrontId == null) {
-        throw Exception('فشل رفع هوية المالك الأمامية');
-      }
-      final ownerIdBackId = await _uploadFile(ownerIdBackPath);
-      if (ownerIdBackPath != null && ownerIdBackId == null) {
-        throw Exception('فشل رفع هوية المالك الخلفية');
-      }
-      final officeImageId = await _uploadFile(officeImagePath);
-      if (officeImagePath != null && officeImageId == null) {
-        throw Exception('فشل رفع صورة المكتب');
-      }
-      final crFrontId = await _uploadFile(commercialCardFrontPath);
-      if (commercialCardFrontPath != null && crFrontId == null) {
-        throw Exception('فشل رفع السجل التجاري الأمامي');
-      }
-      final crBackId = await _uploadFile(commercialCardBackPath);
-      if (commercialCardBackPath != null && crBackId == null) {
-        throw Exception('فشل رفع السجل التجاري الخلفي');
-      }
-
-      // الخطوة الرابعة: ربط معرفات الوسائط بالمستخدم
-      final mediaResult = await updateRealstateOfficeMedia(
-        officeLogo: officeLogoId,
-        ownerIdFront: ownerIdFrontId,
-        ownerIdBack: ownerIdBackId,
-        officeImage: officeImageId,
-        commercialCardFront: crFrontId,
-        commercialCardBack: crBackId,
+      // أرسل جميع المعرفات في طلب واحد لتحديث المستخدم
+      final updateResponse = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $adminApiToken',
+        },
+        body: jsonEncode({
+          'type': 'RealstateOffice',
+          'phone': phone,
+          'city': city,
+          'RealstateOfficeAddress': address,
+          'RealstateOfficeLogo': officeLogoId,
+          'RealstateOfficeOwnerIdFront': ownerIdFrontId,
+          'RealstateOfficeOwnerIdBack': ownerIdBackId,
+          'RealstateOfficeImage': officeImageId,
+          'RealstateOfficeCommercialCardFront': crFrontId,
+          'RealstateOfficeCommercialCardBack': crBackId,
+          'Vat': vat,
+        }),
       );
 
-      if (!mediaResult['success']) {
-        await _deleteUser(userId, token);
-      }
+      final updateData = jsonDecode(updateResponse.body);
 
-      return mediaResult;
+      if (updateResponse.statusCode == 200) {
+        await _updateUserData(updateData);
+        return {
+          'success': true,
+          'data': updateData,
+        };
+      } else {
+        await _deleteUser(userId, token);
+        return {
+          'success': false,
+          'message': updateData['error']?['message'] ?? 'فشل تحديث بيانات المستخدم',
+        };
+      }
     } catch (e) {
       await _deleteUser(userId, token);
       return {

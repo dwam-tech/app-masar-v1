@@ -65,7 +65,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   void initState() {
     super.initState();
     final authProvider = context.read<AuthProvider>();
-    _selectedCity = authProvider.userData?['city'] ?? _cities.first;
+    final storedCity = authProvider.userData?['city'];
+    if (storedCity != null && _cities.contains(storedCity)) {
+      _selectedCity = storedCity;
+    } else {
+      _selectedCity = _cities.first;
+    }
     Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_pageController.positions.isNotEmpty) {
         _currentPage = (_currentPage + 1) % _sliderImages.length;

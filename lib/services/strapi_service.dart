@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class StrapiService {
   static const String baseUrl = 'http://192.168.1.12:1337';
@@ -16,9 +18,18 @@ class StrapiService {
     final uri = Uri.parse('$baseUrl/api/upload');
     final request = http.MultipartRequest('POST', uri);
     request.headers['Authorization'] = 'Bearer $authToken';
-    request.files.add(await http.MultipartFile.fromPath('files', filePath));
+
+    final mimeType = lookupMimeType(filePath);
+    final file = await http.MultipartFile.fromPath(
+      'files',
+      filePath,
+      contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+    );
+    request.files.add(file);
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
+    // Log the response from Strapi for debugging purposes
+    print('Upload response: ${response.statusCode} - $responseBody');
     if (response.statusCode == 200) {
       final data = jsonDecode(responseBody);
       if (data is List && data.isNotEmpty) {

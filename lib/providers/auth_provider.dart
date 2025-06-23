@@ -101,6 +101,91 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
+  // تحديث البيانات النصية فقط لحساب مكتب العقار
+  Future<Map<String, dynamic>> updateRealstateOfficeDetails({
+    required String phone,
+    required String city,
+    required String address,
+    required bool vat,
+  }) async {
+    final result = await _authService.updateRealstateOfficeDetails(
+      phone: phone,
+      city: city,
+      address: address,
+      vat: vat,
+    );
+
+    if (result['success']) {
+      await _loadUserSession();
+    }
+
+    return result;
+  }
+
+  // ربط معرفات الوسائط بحساب المكتب
+  Future<Map<String, dynamic>> updateRealstateOfficeMedia({
+    int? officeLogo,
+    int? ownerIdFront,
+    int? ownerIdBack,
+    int? officeImage,
+    int? commercialCardFront,
+    int? commercialCardBack,
+  }) async {
+    final result = await _authService.updateRealstateOfficeMedia(
+      officeLogo: officeLogo,
+      ownerIdFront: ownerIdFront,
+      ownerIdBack: ownerIdBack,
+      officeImage: officeImage,
+      commercialCardFront: commercialCardFront,
+      commercialCardBack: commercialCardBack,
+    );
+
+    if (result['success']) {
+      await _loadUserSession();
+    }
+
+    return result;
+  }
+
+  // إنشاء حساب مكتب عقار كامل بالخطوات المتتالية
+  Future<Map<String, dynamic>> registerRealstateOffice({
+    required String username,
+    required String email,
+    required String password,
+    required String phone,
+    required String city,
+    required String address,
+    bool vat = false,
+    String? officeLogoPath,
+    String? ownerIdFrontPath,
+    String? ownerIdBackPath,
+    String? officeImagePath,
+    String? commercialCardFrontPath,
+    String? commercialCardBackPath,
+  }) async {
+    final result = await _authService.registerRealstateOffice(
+      username: username,
+      email: email,
+      password: password,
+      phone: phone,
+      city: city,
+      address: address,
+      vat: vat,
+      officeLogoPath: officeLogoPath,
+      ownerIdFrontPath: ownerIdFrontPath,
+      ownerIdBackPath: ownerIdBackPath,
+      officeImagePath: officeImagePath,
+      commercialCardFrontPath: commercialCardFrontPath,
+      commercialCardBackPath: commercialCardBackPath,
+    );
+
+    if (result['success']) {
+      await _loadUserSession();
+    }
+
+    return result;
+  }
+
   // تسجيل مستخدم جديد وإنشاء app user مباشرة
   Future<Map<String, dynamic>> registerUser({
     required String username,

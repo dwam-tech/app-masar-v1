@@ -195,6 +195,106 @@ class AuthService {
     }
   }
 
+  /// الخطوة الثانية: تحديث الحقول النصية فقط لحساب مكتب العقار
+  Future<Map<String, dynamic>> updateRealstateOfficeDetails({
+    required String phone,
+    required String city,
+    required String address,
+    required bool vat,
+  }) async {
+    try {
+      final userData = await getUserData();
+      if (userData == null) {
+        return {
+          'success': false,
+          'message': 'بيانات المستخدم غير متوفرة',
+        };
+      }
+
+      final userId = userData['id'];
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $adminApiToken',
+        },
+        body: jsonEncode({
+          'type': 'RealstateOffice',
+          'phone': phone,
+          'city': city,
+          'RealstateOfficeAddress': address,
+          'Vat': vat,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        await _updateUserData(data);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'message': data['error']?['message'] ?? 'فشل تحديث البيانات النصية',
+        };
+      }
+    } catch (e) {
+      print('خطأ في تحديث البيانات النصية: $e');
+      return {'success': false, 'message': 'خطأ في الاتصال بالخادم: $e'};
+    }
+  }
+
+  /// الخطوة الرابعة: ربط الوسائط المرفوعة بحساب مكتب العقار
+  Future<Map<String, dynamic>> updateRealstateOfficeMedia({
+    int? officeLogo,
+    int? ownerIdFront,
+    int? ownerIdBack,
+    int? officeImage,
+    int? commercialCardFront,
+    int? commercialCardBack,
+  }) async {
+    try {
+      final userData = await getUserData();
+      if (userData == null) {
+        return {
+          'success': false,
+          'message': 'بيانات المستخدم غير متوفرة',
+        };
+      }
+
+      final userId = userData['id'];
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $adminApiToken',
+        },
+        body: jsonEncode({
+          'RealstateOfficeLogo': officeLogo,
+          'RealstateOfficeOwnerIdFront': ownerIdFront,
+          'RealstateOfficeOwnerIdBack': ownerIdBack,
+          'RealstateOfficeImage': officeImage,
+          'RealstateOfficeCommercialCardFront': commercialCardFront,
+          'RealstateOfficeCommercialCardBack': commercialCardBack,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        await _updateUserData(data);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'message': data['error']?['message'] ?? 'فشل ربط الوسائط بالمستخدم',
+        };
+      }
+    } catch (e) {
+      print('خطأ في تحديث الوسائط: $e');
+      return {'success': false, 'message': 'خطأ في الاتصال بالخادم: $e'};
+    }
+  }
+
   // تسجيل مكتب عقاري متكامل مع رفع الملفات وربطها بالمستخدم مباشرة
   Future<Map<String, dynamic>> registerRealstateOffice({
     required String username,
@@ -232,31 +332,59 @@ class AuthService {
     final userId = userData['id'];
 
     try {
-      final officeLogoId = await _uploadFile(officeLogoPath);
-      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath);
-      final ownerIdBackId = await _uploadFile(ownerIdBackPath);
-      final officeImageId = await _uploadFile(officeImagePath);
-      final crFrontId = await _uploadFile(commercialCardFrontPath);
-      final crBackId = await _uploadFile(commercialCardBackPath);
-
-      final step2 = await registerRealstateOfficeStep2(
+      // الخطوة الثانية: تحديث الحقول النصية فقط
+      final details = await updateRealstateOfficeDetails(
         phone: phone,
         city: city,
         address: address,
+        vat: vat,
+      );
+      if (!details['success']) {
+        await _deleteUser(userId, token);
+        return details;
+      }
+
+      // الخطوة الثالثة: رفع الصور بشكل منفصل
+      final officeLogoId = await _uploadFile(officeLogoPath);
+      if (officeLogoPath != null && officeLogoId == null) {
+        throw Exception('فشل رفع شعار المكتب');
+      }
+      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath);
+      if (ownerIdFrontPath != null && ownerIdFrontId == null) {
+        throw Exception('فشل رفع هوية المالك الأمامية');
+      }
+      final ownerIdBackId = await _uploadFile(ownerIdBackPath);
+      if (ownerIdBackPath != null && ownerIdBackId == null) {
+        throw Exception('فشل رفع هوية المالك الخلفية');
+      }
+      final officeImageId = await _uploadFile(officeImagePath);
+      if (officeImagePath != null && officeImageId == null) {
+        throw Exception('فشل رفع صورة المكتب');
+      }
+      final crFrontId = await _uploadFile(commercialCardFrontPath);
+      if (commercialCardFrontPath != null && crFrontId == null) {
+        throw Exception('فشل رفع السجل التجاري الأمامي');
+      }
+      final crBackId = await _uploadFile(commercialCardBackPath);
+      if (commercialCardBackPath != null && crBackId == null) {
+        throw Exception('فشل رفع السجل التجاري الخلفي');
+      }
+
+      // الخطوة الرابعة: ربط معرفات الوسائط بالمستخدم
+      final mediaResult = await updateRealstateOfficeMedia(
         officeLogo: officeLogoId,
         ownerIdFront: ownerIdFrontId,
         ownerIdBack: ownerIdBackId,
         officeImage: officeImageId,
         commercialCardFront: crFrontId,
         commercialCardBack: crBackId,
-        vat: vat,
       );
 
-      if (!step2['success']) {
+      if (!mediaResult['success']) {
         await _deleteUser(userId, token);
       }
 
-      return step2;
+      return mediaResult;
     } catch (e) {
       await _deleteUser(userId, token);
       return {

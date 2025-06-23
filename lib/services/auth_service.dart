@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   // عنوان الخادم الخاص بواجهة برمجة التطبيقات
   static const String baseUrl = 'http://192.168.1.12:1337';
+  // API token with elevated permissions used before user login
+  static const String adminApiToken =
+      '93474d3881c0274f78c97c281d3a178cfbb139fe90794f42f4ae45bf7aae5f6f0277050f1e27dcc841a35fe14fb14a9fc6ce35a4528fa0738767a6f5233cdaecf2c23b088cdb891316218a6af07a8cafb2b57f4cbdcc9e18bec5b959537b40e91541df94696c7183ebf30981ae209a78b27c2f55d283064cca8097ab774b2c2b';
   static const String loginEndpoint = '/api/auth/local';
   static const String registerEndpoint = '/api/auth/local/register';
   static const String tokenKey = 'auth_token';
@@ -109,7 +112,7 @@ class AuthService {
     }
   }
 
-  // تحديث بيانات حساب مكتب عقاري وإنشاء سجل RealstateOfficeProfile
+  // تحديث بيانات حساب مكتب عقاري وربط صور المكتب مباشرة بالمستخدم
   Future<Map<String, dynamic>> registerRealstateOfficeStep2({
     required String phone,
     required String city,
@@ -123,14 +126,6 @@ class AuthService {
     required bool vat,
   }) async {
     try {
-      final token = await getToken();
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'يجب تسجيل الدخول أولاً',
-        };
-      }
-
       final userData = await getUserData();
       if (userData == null) {
         return {
@@ -141,64 +136,40 @@ class AuthService {
 
       final userId = userData['id'];
 
-      // تحديث بيانات المستخدم العامة
+      // تحديث بيانات المستخدم مباشرة دون إنشاء سجل منفصل
       final updateResponse = await http.put(
         Uri.parse('$baseUrl/api/users/$userId'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $adminApiToken',
         },
         body: jsonEncode({
           'type': 'RealstateOffice',
           'phone': phone,
           'city': city,
+          'RealstateOfficeAddress': address,
+          'RealstateOfficeLogo': officeLogo,
+          'RealstateOfficeOwnerIdFront': ownerIdFront,
+          'RealstateOfficeOwnerIdBack': ownerIdBack,
+          'RealstateOfficeImage': officeImage,
+          'RealstateOfficeCommercialCardFront': commercialCardFront,
+          'RealstateOfficeCommercialCardBack': commercialCardBack,
+          'Vat': vat,
         }),
       );
 
       final updateData = jsonDecode(updateResponse.body);
 
-      if (updateResponse.statusCode != 200) {
-        return {
-          'success': false,
-          'message': updateData['error']?['message'] ?? 'فشل تحديث بيانات المستخدم',
-        };
-      }
-
-      await _updateUserData(updateData);
-
-      // إنشاء سجل RealstateOfficeProfile
-      final profileResponse = await http.post(
-        Uri.parse('$baseUrl/api/realstate-office-profiles'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'data': {
-            'RealstateOfficeLogo': officeLogo,
-            'RealstateOfficeOwnerIdFront': ownerIdFront,
-            'RealstateOfficeOwnerIdBack': ownerIdBack,
-            'RealstateOfficeImage': officeImage,
-            'RealstateOfficeCommercialCardFront': commercialCardFront,
-            'RealstateOfficeCommercialCardBack': commercialCardBack,
-            'Vat': vat,
-            'RealstateOfficeAddress': address,
-            'user': userId,
-          }
-        }),
-      );
-
-      final profileData = jsonDecode(profileResponse.body);
-
-      if (profileResponse.statusCode == 200 || profileResponse.statusCode == 201) {
+      if (updateResponse.statusCode == 200) {
+        await _updateUserData(updateData);
         return {
           'success': true,
-          'data': profileData,
+          'data': updateData,
         };
       } else {
         return {
           'success': false,
-          'message': profileData['error']?['message'] ?? 'فشل إنشاء بيانات المكتب',
+          'message': updateData['error']?['message'] ?? 'فشل تحديث بيانات المستخدم',
         };
       }
     } catch (e) {
@@ -209,7 +180,7 @@ class AuthService {
     }
   }
 
-  // تسجيل مكتب عقاري متكامل مع رفع الملفات وإنشاء السجل
+  // تسجيل مكتب عقاري متكامل مع رفع الملفات وربطها بالمستخدم مباشرة
   Future<Map<String, dynamic>> registerRealstateOffice({
     required String username,
     required String email,
@@ -246,12 +217,12 @@ class AuthService {
     final userId = userData['id'];
 
     try {
-      final officeLogoId = await _uploadFile(officeLogoPath, token);
-      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath, token);
-      final ownerIdBackId = await _uploadFile(ownerIdBackPath, token);
-      final officeImageId = await _uploadFile(officeImagePath, token);
-      final crFrontId = await _uploadFile(commercialCardFrontPath, token);
-      final crBackId = await _uploadFile(commercialCardBackPath, token);
+      final officeLogoId = await _uploadFile(officeLogoPath);
+      final ownerIdFrontId = await _uploadFile(ownerIdFrontPath);
+      final ownerIdBackId = await _uploadFile(ownerIdBackPath);
+      final officeImageId = await _uploadFile(officeImagePath);
+      final crFrontId = await _uploadFile(commercialCardFrontPath);
+      final crBackId = await _uploadFile(commercialCardBackPath);
 
       final step2 = await registerRealstateOfficeStep2(
         phone: phone,
@@ -470,14 +441,15 @@ class AuthService {
   }
 
   // رفع ملف وإرجاع معرفه
-  Future<int?> _uploadFile(String? path, String token) async {
+  Future<int?> _uploadFile(String? path, [String? token]) async {
     if (path == null) return null;
     if (!_isValidFileType(path)) {
       throw Exception('نوع ملف غير مدعوم');
     }
+    final authToken = token ?? adminApiToken;
     final uri = Uri.parse('$baseUrl/api/upload');
     final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $token'
+      ..headers['Authorization'] = 'Bearer $authToken'
       ..files.add(await http.MultipartFile.fromPath('files', path));
     final response = await request.send();
     final body = await response.stream.bytesToString();

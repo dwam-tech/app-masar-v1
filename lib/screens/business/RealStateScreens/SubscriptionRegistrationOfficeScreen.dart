@@ -169,21 +169,14 @@ class _SubscriptionRegistrationOfficeScreenState
       return;
     }
 
-    final token = authProvider.token;
-    if (token == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('خطأ في الجلسة')));
-      return;
-    }
-
     final strapiService = StrapiService();
 
-    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!, token);
-    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!, token);
-    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!, token);
-    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!, token);
-    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!, token);
-    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!, token);
+    final officeLogoId = await strapiService.uploadMedia(_officeLogoPath!);
+    final ownerIdFrontId = await strapiService.uploadMedia(_ownerIdFrontPath!);
+    final ownerIdBackId = await strapiService.uploadMedia(_ownerIdBackPath!);
+    final officePhotoId = await strapiService.uploadMedia(_officePhotoFrontPath!);
+    final crFrontId = await strapiService.uploadMedia(_crPhotoFrontPath!);
+    final crBackId = await strapiService.uploadMedia(_crPhotoBackPath!);
 
     if ([
           officeLogoId,
